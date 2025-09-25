@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Collections; 
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -28,6 +28,10 @@ public class AgentScript : MonoBehaviour
     [Header("Captura")]
     [SerializeField] private float catchDistance = 1f;
     private bool gameOverTriggered = false;
+
+    [Header("Persecución")]
+    [SerializeField] private float loseSightTime = 2f;
+    private float lastSeenTime = Mathf.NegativeInfinity;
 
     private void Awake()
     {
@@ -72,6 +76,12 @@ public class AgentScript : MonoBehaviour
             {
                 agent.isStopped = false;
                 agent.SetDestination(player.position);
+
+                if (Time.time - lastSeenTime > loseSightTime)
+                {
+                    isChasing = false;
+                    RestartPatrolFromRandom();
+                }
             }
         }
 
@@ -96,13 +106,20 @@ public class AgentScript : MonoBehaviour
 
             if (currentTargetIndex >= targets.Count)
             {
-                finishedPatrol = true;
-                agent.isStopped = true;
-                return;
+                currentTargetIndex = 0;
             }
 
             agent.SetDestination(targets[currentTargetIndex].position);
         }
+    }
+
+    private void RestartPatrolFromRandom()
+    {
+        if (targets == null || targets.Count == 0) return;
+        finishedPatrol = false;
+        currentTargetIndex = Random.Range(0, targets.Count);
+        agent.isStopped = false;
+        agent.SetDestination(targets[currentTargetIndex].position);
     }
 
     private void DetectPlayer()
@@ -126,6 +143,7 @@ public class AgentScript : MonoBehaviour
                 finishedPatrol = true;
                 agent.isStopped = false;
                 agent.SetDestination(player.position);
+                lastSeenTime = Time.time;
             }
         }
     }
